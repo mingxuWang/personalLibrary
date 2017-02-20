@@ -4,6 +4,7 @@
  * each 数组遍历方法
  * getType 判断并获取数据类型
  * bind 返回一个指定上下文的函数的引用
+ * trim 去除字符串首尾空格
  */
 
 var helper = {
@@ -100,5 +101,13 @@ var helper = {
         var args = Array.prototype.slice.call(arguments);
         return fn.apply(context,args);
       };
+    },
+    /**
+     * 去除传入字符串的首尾空格并返回新的字符串
+     * @params {String} str 需要去除空格的字符串
+     * ￥return {String} 去除首尾空格的字符串
+     */
+    trim: function(str){
+        return (str || "").replace(/^\s+|\s+$/g,"");
     }
 };
