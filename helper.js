@@ -5,6 +5,7 @@
  * getType 判断并获取数据类型
  * bind 返回一个指定上下文的函数的引用
  * trim 去除字符串首尾空格
+ * getQuerys 获取页面search参数并以对象形式返回
  */
 
 var helper = {
@@ -109,5 +110,32 @@ var helper = {
      */
     trim: function(str){
         return (str || "").replace(/^\s+|\s+$/g,"");
+    },
+    /**
+     * 获取页面search中参数并转换为对象形式
+     * @params {String} -可选 url 希望进行转换的查询参数字符串
+     * @return {Object} args 转换完成的参数对象
+     */
+    getQuerys: function(url){
+      var qs = "";
+  		var args = {};
+  		if (url) {
+  			if (url.indexOf('?') >= 0) {
+  				qs = url.substr(url.indexOf('?') + 1);
+  			}
+  		} else {
+  			qs = window.location.search.substr(1);
+  		}
+  		if (qs.length) {
+  			var params = qs.split("&");
+  			for ( var i = 0, len = params.length; i < len; i++ ) {
+  				var item = params[i].split("=");
+  				var key = decodeURIComponent(item[0]) || '';
+  				var value = decodeURIComponent(item[1]) || '';
+  				args[key] = value;
+  			}
+  		}
+
+  		return args;
     }
 };
