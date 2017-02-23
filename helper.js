@@ -6,6 +6,7 @@
  * bind 返回一个指定上下文的函数的引用
  * trim 去除字符串首尾空格
  * getQuerys 获取页面search参数并以对象形式返回
+ * cookie cookie操作相关 get set unset
  */
 
 var helper = {
@@ -88,8 +89,8 @@ var helper = {
      * @params {} target 需要判断的目标
      * @return {String} 返回小写的目标类型
      */
-    getType: function(target){
-        return Object.prototype.toString.call(target).slice(8,-1).toLowerCase();
+    getType: function(target) {
+        return Object.prototype.toString.call(target).slice(8, -1).toLowerCase();
     },
     /**
      * 传入需要改变引用上下文的函数名与上下文，返回一个调整后的引用
@@ -97,45 +98,104 @@ var helper = {
      * @params {Object} context 指定的上下文
      * @return {Function} 返回一个更改了引用上下文的函数的引用，后续可以直接调用
      */
-    bind: function(fn,context){
-      return function(){
-        var args = Array.prototype.slice.call(arguments);
-        return fn.apply(context,args);
-      };
+    bind: function(fn, context) {
+        return function() {
+            var args = Array.prototype.slice.call(arguments);
+            return fn.apply(context, args);
+        };
     },
     /**
      * 去除传入字符串的首尾空格并返回新的字符串
      * @params {String} str 需要去除空格的字符串
      * ￥return {String} 去除首尾空格的字符串
      */
-    trim: function(str){
-        return (str || "").replace(/^\s+|\s+$/g,"");
+    trim: function(str) {
+        return (str || "").replace(/^\s+|\s+$/g, "");
     },
     /**
      * 获取页面search中参数并转换为对象形式
      * @params {String} -可选 url 希望进行转换的查询参数字符串
      * @return {Object} args 转换完成的参数对象
      */
-    getQuerys: function(url){
-      var qs = "";
-  		var args = {};
-  		if (url) {
-  			if (url.indexOf('?') >= 0) {
-  				qs = url.substr(url.indexOf('?') + 1);
-  			}
-  		} else {
-  			qs = window.location.search.substr(1);
-  		}
-  		if (qs.length) {
-  			var params = qs.split("&");
-  			for ( var i = 0, len = params.length; i < len; i++ ) {
-  				var item = params[i].split("=");
-  				var key = decodeURIComponent(item[0]) || '';
-  				var value = decodeURIComponent(item[1]) || '';
-  				args[key] = value;
-  			}
-  		}
+    getQuerys: function(url) {
+        var qs = "";
+        var args = {};
+        if (url) {
+            if (url.indexOf('?') >= 0) {
+                qs = url.substr(url.indexOf('?') + 1);
+            }
+        } else {
+            qs = window.location.search.substr(1);
+        }
+        if (qs.length) {
+            var params = qs.split("&");
+            for (var i = 0, len = params.length; i < len; i++) {
+                var item = params[i].split("=");
+                var key = decodeURIComponent(item[0]) || '';
+                var value = decodeURIComponent(item[1]) || '';
+                args[key] = value;
+            }
+        }
 
-  		return args;
+        return args;
+    },
+    cookie: {
+        get: function(name) {
+            var cookie = document.cookie,
+                cookieName = encodeURIComponent(name) + "=",
+                cookieStart = cookie.indexOf(cookieName),
+                cookieValue = null;
+            if (cookieStart > -1) {
+                var cookieEnd = cookie.indexOf(";", cookieStart);
+                if (cookieEnd === -1) {
+                    cookieEnd = cookie.length;
+                }
+                cookieValue = decodeURIComponent(cookie.slice(cookieStart + cookieName.length, cookieEnd));
+            }
+            return cookieValue;
+        },
+        /**
+       * 设置cookie
+       * @params {String} name 要设置的cookie名称
+       * @params {String} value 要设置的cookie值
+       * @params {Object} opts 该cookie的其它相关参数
+       * @params {String} opts.domain cookie域
+       * @params {String} opts.path cookie路径
+       * @params {Date} opts.expires cookie失效时间
+       * @params {Boolean} opts.secure cookie是否安全
+       */
+        set: function(name, value, opts) {
+            var cookie = encodeURIComponent(name) + "=" + encodeURIComponent(value),
+                cookieOpts = opts || {};
+            if (cookieOpts.expires && cookieOpts.expires instanceof Date) {
+                cookie += "; expires=" + cookieOpts.expires.toGMTString();
+            }
+            if (cookieOpts.domain) {
+                cookie += "; domain=" + cookieOpts.domain;
+            }
+            if (cookieOpts.path) {
+                cookie += "; path=" + cookieOpts.path;
+            }
+            if (cookieOpts.secure) {
+                cookie += "; secure";
+            }
+            document.cookie = cookie;
+        },
+        /**
+       * 使cookie过期
+       * 设置cookie
+       * @params {String} name 要设置的cookie名称
+       * @params {String} path cookie路径
+       * @params {String} domain cookie域
+       * @params {String} opts.secure cookie是否安全
+       */
+        unset: function(name, path, domain, secure) {
+            helper.cookie.set(name, "", {
+                path: path,
+                domain: domain,
+                secure: secure,
+                expires: new Date(0)
+            });
+        }
     }
 };
