@@ -2,6 +2,7 @@
  * Helper对象提供的方法有：
  * on 委托事件绑定方法
  * each 数组遍历方法
+ * map 数组遍历使用同一fn处理方法
  * getType 判断并获取数据类型
  * bind 返回一个指定上下文的函数的引用
  * trim 去除字符串首尾空格
@@ -65,24 +66,41 @@ var helper = {
     },
     /**
      * 数组遍历方法
-     * @params {Array} list 需要遍历的数组
+     * @params {Array} Arr 需要遍历的数组
      * @params {Function} callback 每个数组内元素要执行的回调函数
      */
-    each: function(list, callback) {
+    each: function(Arr, callback) {
         if (helper.$getType(callback) !== "function") {
             console.error("$each方法调用时回调函数 未传入/类型错误！");
             return;
         }
-        if ((helper.$getType(list) !== "array")) {
+        if ((helper.$getType(Arr) !== "array")) {
             console.error("$each方法调用时数组未正确传入！");
             return;
         }
-        for (var i = 0, len = list.length; i < len; i++) {
-            var result = callback.call(list[i] || null, i, list[i]);
+        for (var i = 0, len = Arr.length; i < len; i++) {
+            var result = callback.call(Arr[i] || null, i, list[i]);
             if (result === false) {
                 return;
             }
         }
+    },
+    /**
+     * 数组遍历使用同一fn处理方法
+     * @params {Array} Arr 需要进行map处理的数组
+     * @params {Function} fn 数组中每个对象需要处理的函数
+     * @params {Object} context 处理函数中的上下文
+     * @return {Array} 处理完成后的结果数组
+     */
+    map: function(Arr, fn, context) {
+        var temp = [],
+            key = 0,
+            len = Arr.length,
+            con = context || null;
+        for (; key < len; key++) {
+            temp.push(fn.call(con, Arr[key], key, Arr));
+        }
+        return temp;
     },
     /**
      * 判断并返回判断目标的数据类型
