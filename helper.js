@@ -117,9 +117,10 @@ var helper = {
      * @return {Function} 返回一个更改了引用上下文的函数的引用，后续可以直接调用
      */
     bind: function(fn, context) {
+        var _args = [].slice.call(arguments,2);
         return function() {
-            var args = Array.prototype.slice.call(arguments);
-            return fn.apply(context, args);
+            var args = [].slice.call(arguments);
+            return fn.apply(context, _args.concat(args));
         };
     },
     /**
