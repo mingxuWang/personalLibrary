@@ -8,6 +8,7 @@
  * trim 去除字符串首尾空格
  * getQuerys 获取页面search参数并以对象形式返回
  * cookie cookie操作相关 get set unset
+ * copy 深拷贝方法
  */
 
 var helper = {
@@ -157,6 +158,30 @@ var helper = {
         }
 
         return args;
+    },
+    /**
+     * 深拷贝方法
+     * @params {Object} source 需要拷贝的对象
+     * @return {Object} target 拷贝完成的新对象
+     */
+    copy: function _copy(source){
+      var target = {};
+      for(var key in source){
+          if(source.hasOwnProperty(key)){
+            if(typeof source[key] === "object"){
+                  if(source[key] === null){
+                    target[key] = null;
+                  }else if(Object.prototype.toString.call(source[key]).slice(8,-1).toLowerCase() === "array"){
+                      target[key] = source[key].slice(0);
+                  }else{
+                    target[key] = _copy(source[key]);
+                  }
+            }else{
+              target[key] = source[key];
+            }
+          }
+      }
+      return target;
     },
     cookie: {
         get: function(name) {
