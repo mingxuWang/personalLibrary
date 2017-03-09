@@ -9,6 +9,7 @@
  * getQuerys 获取页面search参数并以对象形式返回
  * cookie cookie操作相关 get set unset
  * copy 深拷贝方法
+ * extend 对目标对象进行拓展方法
  */
 
 var helper = {
@@ -20,14 +21,15 @@ var helper = {
      * @params callback 事件响应函数
      */
     on: function(parent, eventsName, child, callback) {
-        var parentNodes = document.querySelectorAll(parent);
-        var len = parentNodes.length;
-        var targetType = getType(child);
+        var parentNodes = document.querySelectorAll(parent),
+            len = parentNodes.length,
+            targetType = getType(child),
+            i = 0;
         if (len === 0) {
             return;
         }
 
-        for (var i = 0; i < len; i++) {
+        for (; i < len; i++) {
             parentNodes[i].addEventListener(eventsName, addListener, false);
         }
 
@@ -72,15 +74,16 @@ var helper = {
      */
     each: function(Arr, callback) {
         if (helper.$getType(callback) !== "function") {
-            console.error("$each方法调用时回调函数 未传入/类型错误！");
-            return;
+            throw new Error("$each方法调用时回调函数 未传入/类型错误！");
         }
         if ((helper.$getType(Arr) !== "array")) {
-            console.error("$each方法调用时数组未正确传入！");
-            return;
+            throw new Error("each方法调用时数组未正确传入！");
         }
-        for (var i = 0, len = Arr.length; i < len; i++) {
-            var result = callback.call(Arr[i] || null, i, list[i]);
+        var i = 0,
+            len = Arr.length,
+            result;
+        for (; i < len; i++) {
+            result = callback.call(Arr[i] || null, i, list[i]);
             if (result === false) {
                 return;
             }
@@ -97,9 +100,14 @@ var helper = {
         var temp = [],
             key = 0,
             len = Arr.length,
-            con = context || null;
+            con = context || null,
+            val;
         for (; key < len; key++) {
-            temp.push(fn.call(con, Arr[key], key, Arr));
+            val = fn.call(con, Arr[key], key, Arr);
+            if (val === false) {
+                return temp;
+            }
+            temp.push(val);
         }
         return temp;
     },
@@ -109,7 +117,7 @@ var helper = {
      * @return {String} 返回小写的目标类型
      */
     getType: function(target) {
-        return Object.prototype.toString.call(target).slice(8, -1).toLowerCase();
+        return {}.toString.call(target).slice(8, -1).toLowerCase();
     },
     /**
      * 传入需要改变引用上下文的函数名与上下文，返回一个调整后的引用
@@ -118,7 +126,7 @@ var helper = {
      * @return {Function} 返回一个更改了引用上下文的函数的引用，后续可以直接调用
      */
     bind: function(fn, context) {
-        var _args = [].slice.call(arguments,2);
+        var _args = [].slice.call(arguments, 2);
         return function() {
             var args = [].slice.call(arguments);
             return fn.apply(context, _args.concat(args));
@@ -164,25 +172,71 @@ var helper = {
      * @params {Object} source 需要拷贝的对象
      * @return {Object} target 拷贝完成的新对象
      */
-    copy: function _copy(source){
-      var target = {};
-      for(var key in source){
-          if(source.hasOwnProperty(key)){
-            if(typeof source[key] === "object"){
-                  if(source[key] === null){
-                    target[key] = null;
-                  }else if(Object.prototype.toString.call(source[key]).slice(8,-1).toLowerCase() === "array"){
-                      target[key] = source[key].slice(0);
-                  }else{
-                    target[key] = _copy(source[key]);
-                  }
-            }else{
-              target[key] = source[key];
+    copy: function _copy(source) {
+        var target = {};
+        for (var key in source) {
+            if (source.hasOwnProperty(key)) {
+                if (typeof source[key] === "object") {
+                    if (source[key] === null) {
+                        target[key] = null;
+                    } else if ({}.toString.call(source[key]).slice(8, -1).toLowerCase() === "array") {
+                        target[key] = source[key].slice(0);
+                    } else {
+                        target[key] = _copy(source[key]);
+                    }
+                } else {
+                    target[key] = source[key];
+                }
             }
-          }
-      }
-      return target;
+        }
+        return target;
     },
+    /**
+     * extend方法 对目标对象进行拓展
+     * @params {Boolean} deep 是否需要深拷贝
+     * @return {Object} target 需要被extend的对象
+     * @return {Object} others 后续可传入任意个被extend的对象
+     */
+    extend: function(deep, target) {
+        var args = [].slice.call(arguments, 2),
+            len = args.length,
+            i = 0,
+            key;
+        if (len === 0) {
+            throw new Error("未传入要拓展的对象！");
+        }
+        if (!deep) {
+            for (; i < len; i++) {
+                for (key in args[i]) {
+                    if (args[i].hasOwnProperty(key)) {
+                        target[key] = args[i][key];
+                    }
+                }
+            }
+        } else {
+            for (; i < len; i++) {
+                for (key in args[i]) {
+                    if (args[i].hasOwnProperty(key)) {
+                        if (typeof args[i][key] === "object") {
+                            if (args[i][key] === null) {
+                                target[key] = null;
+                            } else if ({}.toString.call(args[i][key]).slice(8, -1).toLowerCase() === "array") {
+                                target[key] = args[i][key].slice(0);
+                            } else {
+                                target[key] = helper.copy(args[i][key]);
+                            }
+                        } else {
+                            target[key] = args[i][key];
+                        }
+                    }
+                }
+            }
+        }
+        return target;
+    },
+    /**
+     * cookie操作相关
+     */
     cookie: {
         get: function(name) {
             var cookie = document.cookie,
