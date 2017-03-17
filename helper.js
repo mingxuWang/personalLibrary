@@ -35,7 +35,10 @@ var helper = {
 
         // 绑定事件方法
         function addListener(event) {
-            if (getActName(targetType, event) === child.toLowerCase()) {
+            // if (getActName(targetType, event) === child.toLowerCase()) {
+            //     callback(event);
+            // }
+            if(isTarget(targetType, event, child.toLowerCase())){
                 callback(event);
             }
         }
@@ -53,18 +56,33 @@ var helper = {
             return type;
         }
 
-        // 获取目标元素完整名称方法
-        function getActName(type, event) {
-            var name,
+        // 获取目标元素完整名称方法 考虑多class问题弃用
+        // function getActName(type, event) {
+        //     var name,
+        //         lower = event.target[type].toLowerCase();
+        //     if (type === "className") {
+        //         name = ".";
+        //     } else if (type === "id") {
+        //         name = "#";
+        //     } else {
+        //         name = "";
+        //     }
+        //     return name + lower;
+        // }
+        // 判断是否为目标对象
+        function isTarget(type, event, target){
+            var className,
+                targetClass,
                 lower = event.target[type].toLowerCase();
             if (type === "className") {
-                name = ".";
+                className = " " + lower + " ";
+                targetClass = " " + target.slice(1) + " ";
+                return className.indexOf(targetClass) !== -1 ;
             } else if (type === "id") {
-                name = "#";
+                return ( "#" + lower ) === target ? true : false;
             } else {
-                name = "";
+                return lower === target ? true : false;
             }
-            return name + lower;
         }
     },
     /**
@@ -73,10 +91,10 @@ var helper = {
      * @params {Function} callback 每个数组内元素要执行的回调函数
      */
     each: function(Arr, callback) {
-        if (helper.$getType(callback) !== "function") {
+        if (this.$getType(callback) !== "function") {
             throw new Error("$each方法调用时回调函数 未传入/类型错误！");
         }
-        if ((helper.$getType(Arr) !== "array")) {
+        if ((this.$getType(Arr) !== "array")) {
             throw new Error("each方法调用时数组未正确传入！");
         }
         var i = 0,
@@ -223,7 +241,7 @@ var helper = {
                             } else if ({}.toString.call(args[i][key]).slice(8, -1).toLowerCase() === "array") {
                                 target[key] = args[i][key].slice(0);
                             } else {
-                                target[key] = helper.copy(args[i][key]);
+                                target[key] = this.copy(args[i][key]);
                             }
                         } else {
                             target[key] = args[i][key];
@@ -288,7 +306,7 @@ var helper = {
        * @params {String} opts.secure cookie是否安全
        */
         unset: function(name, path, domain, secure) {
-            helper.cookie.set(name, "", {
+            this.cookie.set(name, "", {
                 path: path,
                 domain: domain,
                 secure: secure,
